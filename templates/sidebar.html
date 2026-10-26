@@ -1,0 +1,47 @@
+<aside class="sidebar">
+    <div class="brand">
+        <div class="brand-icon">⌁</div>
+        <div class="brand-copy">
+            <h2>NAB Monitor</h2>
+            <p>Anomaly Detection</p>
+        </div>
+    </div>
+
+    <div class="nav-heading">WORKSPACE</div>
+
+    <nav>
+        <a class="nav-link {% if request.path == '/' %}active{% endif %}"
+           href="/">
+            <span class="nav-icon">▦</span>
+            <span class="nav-label">Main Dashboard</span>
+        </a>
+
+        <a class="nav-link {% if request.path == '/algorithm-info' %}active{% endif %}"
+           href="{{ url_for('algorithm_info') }}">
+            <span class="nav-icon">ℹ</span>
+            <span class="nav-label">Algorithm Information</span>
+        </a>
+
+        <a class="nav-link {% if request.path == '/anomalies' %}active{% endif %}"
+           href="{{ url_for('anomalies') }}">
+            <span class="nav-icon">⚠</span>
+            <span class="nav-label">Anomalies Detected</span>
+        </a>
+
+        <a class="nav-link {% if request.path == '/performance' %}active{% endif %}"
+           href="{{ url_for('performance') }}">
+            <span class="nav-icon">▥</span>
+            <span class="nav-label">Performance</span>
+        </a>
+
+        <a href="/research-results" class="nav-link {% if active_page == 'research_results' %}active{% endif %}">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Research Results</span>
+</a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <strong>NAB Research System</strong><br>
+        Time-series anomaly analysis
+    </div>
+</aside>

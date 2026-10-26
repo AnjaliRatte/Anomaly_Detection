@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Anomalies Detected - NAB Research System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        {% include 'sidebar.html' %}
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <h1>Detected Anomalies</h1>
+                    <p>Complete set of anomalous observations predicted by the current algorithm and dataset.</p>
+                </div>
+            </header>
+
+            <div class="content-body" style="margin-top: 25px;">
+                <!-- Mini Cards for Dataset, Algorithm, and Total Anomalies -->
+                <div class="summary-cards-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <div class="summary-mini-card" style="padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow-card);">
+                        <span style="display: block; color: var(--text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase;">Dataset</span>
+                        <strong id="summary-dataset" style="display: block; margin-top: 6px; font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Loading...</strong>
+                    </div>
+                    <div class="summary-mini-card" style="padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow-card);">
+                        <span style="display: block; color: var(--text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase;">Algorithm</span>
+                        <strong id="summary-algorithm" style="display: block; margin-top: 6px; font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Loading...</strong>
+                    </div>
+                    <div class="summary-mini-card" style="padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow-card);">
+                        <span style="display: block; color: var(--text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase;">Total Anomalies</span>
+                        <strong id="summary-total" style="display: block; margin-top: 6px; font-size: 22px; font-weight: 700; color: var(--orange-dark);">--</strong>
+                    </div>
+                </div>
+
+                <!-- Table Card -->
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="data-table" id="anomalies-table">
+                            <thead>
+                                <tr>
+                                    <th>Observation</th>
+                                    <th>Timestamp</th>
+                                    <th>Observed Value</th>
+                                    <th>Anomaly Score</th>
+                                    <th>Severity</th>
+                                    <th>Ground Truth</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch('/api/anomalies')
+                .then(res => res.json())
+                .then(data => {
+                    const datasetEl = document.getElementById("summary-dataset");
+                    const algoEl = document.getElementById("summary-algorithm");
+                    const totalEl = document.getElementById("summary-total");
+                    const tbody = document.querySelector("#anomalies-table tbody");
+                    tbody.innerHTML = "";
+
+                    if (!data.success) {
+                        datasetEl.textContent = "Error";
+                        algoEl.textContent = "Error";
+                        totalEl.textContent = "0";
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No active detection run found.</td></tr>`;
+                        return;
+                    }
+
+                    datasetEl.textContent = data.dataset || "N/A";
+                    algoEl.textContent = data.algorithm || "N/A";
+                    totalEl.textContent = data.total_anomalies ?? "0";
+
+                    if (!data.anomalies || data.anomalies.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No anomalies detected for this configuration.</td></tr>`;
+                        return;
+                    }
+
+                    // 1. Saare scores extract karein taaki min aur max mil sakein
+                    const scores = data.anomalies.map(item => Number(item.anomaly_score) || 0);
+                    const minScore = Math.min(...scores);
+                    const maxScore = Math.max(...scores);
+
+                    // 2. Har ek anomaly par loop chala kar dynamic severity calculate karein
+                    data.anomalies.forEach(item => {
+                        const score = Number(item.anomaly_score) || 0;
+
+                        // Min-Max normalization (scores ko 0 se 1 ke beech scale karna)
+                        let normalizedScore = 0.5;
+                        if (maxScore > minScore) {
+                            normalizedScore = (score - minScore) / (maxScore - minScore);
+                        }
+
+                        // Dynamic Severity Assignment
+                        let severity = "Low";
+                        if (normalizedScore > 0.75) {
+                            severity = "High";
+                        } else if (normalizedScore > 0.35) {
+                            severity = "Medium";
+                        } else {
+                            severity = "Low";
+                        }
+
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${item.observation}</td>
+                            <td>${item.timestamp}</td>
+                            <td>${Number(item.value).toFixed(4)}</td>
+                            <td>${score.toFixed(4)}</td>
+                            <td><span class="badge badge-${severity.toLowerCase()}">${severity}</span></td>
+                            <td>${item.ground_truth}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(err => {
+                    console.error("Error fetching anomalies:", err);
+                    document.getElementById("summary-dataset").textContent = "Error";
+                    document.getElementById("summary-algorithm").textContent = "Error";
+                    document.getElementById("summary-total").textContent = "0";
+                });
+        });
+    </script>
+</body>
+</html>

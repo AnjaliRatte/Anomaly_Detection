@@ -1,0 +1,2 @@
+algorithm,datasets,mean_precision,mean_recall,mean_f1,mean_pr_auc,mean_runtime
+LSTM Autoencoder,58,0.012340279774206887,0.5971264367816091,0.02366609158187933,0.19269908418785547,820.3606973914068

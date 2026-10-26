@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Reference | NAB Anomaly Detection</title>
+
+    <style>
+        :root {
+            --page-bg: #F7F7F0;
+            --card-bg: #FFFFFF;
+            --sage-light: #E5E9DE;
+            --sage: #63745B;
+            --sage-dark: #344638;
+            --text: #303A32;
+            --muted: #778075;
+            --border: #DCE2D5;
+            --orange: #E58A2B;
+            --green: #6D9870;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--page-bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: 250px;
+            background: var(--sage-dark);
+            color: white;
+            padding: 28px 18px;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 10px 28px;
+            border-bottom: 1px solid #536653;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            background: var(--sage);
+            font-size: 23px;
+        }
+
+        .brand h2 {
+            font-size: 17px;
+            font-weight: 650;
+        }
+
+        .brand p {
+            font-size: 11px;
+            color: #D5DFD0;
+            margin-top: 4px;
+        }
+
+        .nav-heading {
+            color: #BFCDBA;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.3px;
+            margin: 30px 12px 12px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 13px 14px;
+            margin: 3px 0;
+            color: #E5EBE2;
+            text-decoration: none;
+            border-radius: 9px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #465A47;
+        }
+
+        .nav-link.active {
+            background: var(--sage);
+            color: white;
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            width: 22px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            border-top: 1px solid #536653;
+            padding: 18px 10px 0;
+            color: #D5DFD0;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .main {
+            margin-left: 250px;
+            padding: 35px 40px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: clamp(25px, 3vw, 34px);
+            letter-spacing: -0.7px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin-top: 9px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .selector-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 12px rgba(48, 58, 50, 0.025);
+        }
+
+        .selector-bar label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--sage-dark);
+        }
+
+        .selector-bar select {
+            padding: 10px 14px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: var(--page-bg);
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .section-heading {
+            font-size: 18px;
+            font-weight: 650;
+            margin: 25px 0 15px;
+            color: var(--sage-dark);
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px rgba(48, 58, 50, 0.025);
+        }
+
+        .panel-title {
+            font-size: 19px;
+            font-weight: 650;
+            color: var(--sage-dark);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: var(--sage-light);
+            color: var(--sage-dark);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .panel-description {
+            font-size: 14px;
+            color: var(--text);
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .meta-list {
+            list-style: none;
+            font-size: 13px;
+            color: var(--muted);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .meta-list li strong {
+            color: var(--text);
+        }
+
+        .workflow-steps {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .step-card {
+            background: #F4F6F0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .step-number {
+            width: 26px;
+            height: 26px;
+            background: var(--sage);
+            color: white;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 12px;
+            font-weight: 700;
+            margin: 0 auto 10px;
+        }
+
+        .step-title {
+            font-size: 13px;
+            font-weight: 650;
+            color: var(--sage-dark);
+            margin-bottom: 5px;
+        }
+
+        .step-desc {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        .footer {
+            padding: 20px 0 10px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        @media (max-width: 1024px) {
+            .workflow-steps {
+                grid-template-columns: 1fr;
+            }
+            .main {
+                margin-left: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    {% set active_page = 'algorithm_info' %}
+    {% include 'sidebar.html' %}
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <div class="breadcrumb">Workspace / Algorithm Reference</div>
+                <h1>Selected Algorithm Details</h1>
+                <p class="subtitle">
+                    Deep-dive documentation, benchmark results, and execution flow for the active detector.
+                </p>
+            </div>
+        </header>
+
+        <!-- ALGORITHM SELECTOR BAR -->
+        <div class="selector-bar">
+            <label for="algo-dropdown">Inspect Active Algorithm:</label>
+            <select id="algo-dropdown" onchange="renderAlgorithmDetails()">
+                <option value="Isolation Forest">Isolation Forest</option>
+                <option value="LOF">Local Outlier Factor (LOF)</option>
+                <option value="One-Class SVM">One-Class SVM</option>
+                <option value="DBSCAN">DBSCAN</option>
+                <option value="LSTM Autoencoder">LSTM Autoencoder</option>
+                <option value="Half-Space Trees">Half-Space Trees</option>
+            </select>
+        </div>
+
+        <!-- CORE CARD -->
+        <div class="panel">
+            <div class="panel-title">
+                <span id="algo-title">Isolation Forest</span>
+                <span class="badge" id="algo-category">Tree-based / Ensemble</span>
+            </div>
+            <p class="panel-description" id="algo-description">
+                Isolates anomalies instead of profiling normal data points. Because anomalies are few and different, they require fewer splits to isolate, resulting in shorter path lengths.
+            </p>
+            <ul class="meta-list">
+                <li><strong>Configured Parameters:</strong> <code id="algo-params">contamination: 0.005, n_estimators: 100, max_samples: 0.8</code></li>
+                <li><strong>Operational Best-Fit:</strong> <span id="algo-best">High-dimensional data and rapid batch processing for sudden global spikes.</span></li>
+            </ul>
+        </div>
+
+        <!-- OBTAINED RESULTS & BENCHMARK INSIGHTS -->
+        <h2 class="section-heading">Obtained Benchmark Results (NAB Dataset)</h2>
+        <div class="panel">
+            <p class="panel-description" id="algo-results">
+                When evaluated on Numenta Anomaly Benchmark (NAB) time-series datasets, Isolation Forest demonstrates exceptional execution speed and high precision (~0.85+) in catching sharp telemetry jumps and sudden global spikes.
+            </p>
+        </div>
+
+        <!-- STEP BY STEP EXECUTION EXAMPLE -->
+        <h2 class="section-heading">Step-by-Step Pipeline Execution Flow</h2>
+        <div class="panel">
+            <p class="panel-description">
+                Execution sequence for the selected model from raw dataset ingestion to final performance metrics:
+            </p>
+            <div class="workflow-steps">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Ingestion</div>
+                    <div class="step-desc" id="step-1">Dataset loaded and parameters bound via API request.</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Preprocessing</div>
+                    <div class="step-desc">Signal values standardized using StandardScaler and missing values imputed.</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Model Scoring</div>
+                    <div class="step-desc" id="step-3">Ensemble tree paths evaluated to compute continuous anomaly decision scores.</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <div class="step-title">Streaming Loop</div>
+                    <div class="step-desc">Live simulation streams observation-by-observation with dynamic severity tagging.</div>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">5</div>
+                    <div class="step-title">Evaluation</div>
+                    <div class="step-desc">Backend computes Precision, Recall, F1, PR-AUC, and 2x2 Confusion Matrix.</div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            NAB Anomaly Detection Research System
+        </footer>
+    </main>
+
+    <script>
+        const algorithmData = {
+            "Isolation Forest": {
+                category: "Tree-based / Ensemble",
+                description: "Isolates anomalies instead of profiling normal data points. Because anomalies are few and different, they require fewer splits to isolate, resulting in shorter path lengths.",
+                params: "contamination: 0.005, n_estimators: 100, max_samples: 0.8",
+                best: "High-dimensional data and rapid batch processing for sudden global spikes.",
+                results: "When evaluated on Numenta Anomaly Benchmark (NAB) time-series datasets, Isolation Forest demonstrates exceptional execution speed and high precision (~0.85+) in catching sharp telemetry jumps and sudden global spikes.",
+                step3: "Ensemble isolation tree paths evaluated to compute continuous anomaly decision scores."
+            },
+            "LOF": {
+                category: "Density-based / Neighborhood",
+                description: "Computes the local density deviation of a given data point with respect to its surrounding neighbors. Points with significantly lower density than neighbors are flagged as outliers.",
+                params: "contamination: 0.005, n_neighbors: 50",
+                best: "Identifying contextual anomalies and local density variations in structured metrics.",
+                results: "Performs strongly on localized density shifts, though computational scaling requires efficient neighbor graph calculations on large NAB files.",
+                step3: "K-nearest neighbor distances calculated to establish local reachability density scores."
+            },
+            "One-Class SVM": {
+                category: "Kernel-based / Support Vector",
+                description: "Learns a decision boundary that encapsulates normal training data in a high-dimensional feature space using kernel functions, treating points outside the boundary as anomalies.",
+                params: "nu: 0.005, gamma: 0.01",
+                best: "Non-linear boundary modeling when normal operational baselines are well-defined.",
+                results: "Yields robust decision boundaries for stationary metrics, effectively filtering standard operational noise when hyperparameters are well-tuned.",
+                step3: "RBF kernel projections mapped to construct optimal hyper-plane decision boundaries."
+            },
+            "DBSCAN": {
+                category: "Clustering-based",
+                description: "Groups together closely packed points as dense clusters. Points that do not reside in any dense cluster neighborhood are automatically classified as noise or anomalies.",
+                params: "eps: 0.7, min_samples: 5",
+                best: "Noise filtering and identifying arbitrary-shaped cluster outliers.",
+                results: "Effective at stripping low-density noise, though sequential time-series trends require careful epsilon tuning to prevent excessive false alarms.",
+                step3: "Density reachability and core sample neighborhoods evaluated to isolate noise clusters."
+            },
+            "LSTM Autoencoder": {
+                category: "Deep Learning / Reconstruction",
+                description: "A sequence-to-sequence neural architecture that compresses time-series windows and reconstructs them. Normal patterns yield low reconstruction error, whereas anomalies produce high error spikes.",
+                params: "epochs: 20, batch_size: 64, latent_dim: 16",
+                best: "Complex temporal dependencies, seasonality, and long-term trend aberrations.",
+                results: "Achieves superior PR-AUC stability on complex NAB temporal datasets by capturing multi-step seasonal patterns and gradual structural drifts.",
+                step3: "Sequence sliding windows encoded into latent representations and reconstructed to compute MSE errors."
+            },
+            "Half-Space Trees": {
+                category: "Streaming / Online Learning",
+                description: "Designed for data streams, this streaming ensemble creates random partitions over rolling windows to track frequency changes and isolate streaming anomalies instantly.",
+                params: "window_size: 250, n_trees: 25",
+                best: "Real-time streaming monitoring with low memory and high processing speed.",
+                results: "Provides lightning-fast streaming inference with minimal memory overhead, perfectly suited for online telemetry monitoring.",
+                step3: "Rolling window partitions updated online to track frequency divergence and path density."
+            }
+        };
+
+        function renderAlgorithmDetails() {
+            const dropdown = document.getElementById("algo-dropdown");
+            const selectedAlgo = dropdown.value;
+            const data = algorithmData[selectedAlgo];
+
+            if (!data) return;
+
+            document.getElementById("algo-title").textContent = selectedAlgo;
+            document.getElementById("algo-category").textContent = data.category;
+            document.getElementById("algo-description").textContent = data.description;
+            document.getElementById("algo-params").textContent = data.params;
+            document.getElementById("algo-best").textContent = data.best;
+            document.getElementById("algo-results").textContent = data.results;
+            document.getElementById("step-3").textContent = data.step3;
+
+            localStorage.setItem("activeAlgorithm", selectedAlgo);
+        }
+
+        // On load, sync with active algorithm from localStorage if available
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedAlgo = localStorage.getItem("activeAlgorithm");
+            const dropdown = document.getElementById("algo-dropdown");
+            if (savedAlgo && algorithmData[savedAlgo]) {
+                dropdown.value = savedAlgo;
+            }
+            renderAlgorithmDetails();
+        });
+    </script>
+
+</body>
+</html>

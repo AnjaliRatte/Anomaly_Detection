@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance | NAB Anomaly Detection</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --page-bg: #F7F7F0;
+            --card-bg: #FFFFFF;
+            --sage-light: #E5E9DE;
+            --sage: #63745B;
+            --sage-dark: #344638;
+            --text: #303A32;
+            --muted: #778075;
+            --border: #DCE2D5;
+            --orange: #E58A2B;
+            --green: #6D9870;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--page-bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: 250px;
+            background: var(--sage-dark);
+            color: white;
+            padding: 28px 18px;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 10px 28px;
+            border-bottom: 1px solid #536653;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            background: var(--sage);
+            font-size: 23px;
+        }
+
+        .brand h2 {
+            font-size: 17px;
+            font-weight: 650;
+        }
+
+        .brand p {
+            font-size: 11px;
+            color: #D5DFD0;
+            margin-top: 4px;
+        }
+
+        .nav-heading {
+            color: #BFCDBA;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.3px;
+            margin: 30px 12px 12px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 13px 14px;
+            margin: 3px 0;
+            color: #E5EBE2;
+            text-decoration: none;
+            border-radius: 9px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #465A47;
+        }
+
+        .nav-link.active {
+            background: var(--sage);
+            color: white;
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            width: 22px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            border-top: 1px solid #536653;
+            padding: 18px 10px 0;
+            color: #D5DFD0;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .main {
+            margin-left: 250px;
+            padding: 35px 40px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .breadcrumb {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: clamp(25px, 3vw, 34px);
+            letter-spacing: -0.7px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin-top: 9px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--sage-light);
+            color: var(--sage-dark);
+            padding: 10px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+        }
+
+        .section-heading {
+            font-size: 17px;
+            margin-bottom: 17px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 22px;
+            min-width: 0;
+            box-shadow: 0 3px 12px rgba(48, 58, 50, 0.025);
+        }
+
+        .metric-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .metric-label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .metric-icon {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--sage-light);
+            color: var(--sage-dark);
+            font-size: 17px;
+        }
+
+        .metric-value {
+            font-size: 30px;
+            font-weight: 700;
+            margin-top: 17px;
+            letter-spacing: -0.8px;
+        }
+
+        .metric-note {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            min-width: 0;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .panel-title {
+            font-size: 17px;
+            font-weight: 650;
+        }
+
+        .panel-description {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 7px;
+            line-height: 1.5;
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 330px;
+            width: 100%;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: #F4F6F0;
+            color: #687365;
+            font-weight: 600;
+            text-align: left;
+            padding: 14px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 15px 14px;
+            border-bottom: 1px solid #EDF0E9;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .algorithm-name {
+            font-weight: 600;
+        }
+
+        .score {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            background: var(--sage-light);
+            color: var(--sage-dark);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            background: #F4F6F0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .footer {
+            padding: 10px 0 5px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        @media (max-width: 1100px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .main {
+                padding: 28px 24px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 72px;
+                padding: 20px 9px;
+            }
+
+            .brand {
+                justify-content: center;
+                padding: 0 0 22px;
+            }
+
+            .brand-copy,
+            .nav-heading,
+            .nav-label,
+            .sidebar-footer {
+                display: none;
+            }
+
+            .nav-link {
+                justify-content: center;
+                padding: 14px 5px;
+            }
+
+            .nav-icon {
+                font-size: 20px;
+            }
+
+            .main {
+                margin-left: 72px;
+                padding: 24px 15px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .metric-card {
+                padding: 15px;
+            }
+
+            .metric-value {
+                font-size: 25px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .panel {
+                padding: 17px;
+            }
+
+            .chart-wrap {
+                height: 270px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    {% set active_page = 'performance' %}
+    {% include 'sidebar.html' %}
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <div class="breadcrumb">Workspace / Performance</div>
+                <h1>Model Performance</h1>
+                <p class="subtitle">
+                    Evaluate anomaly detection results using classification
+                    metrics and algorithm comparisons.
+                </p>
+            </div>
+
+            <div class="status">
+                <span class="status-dot"></span>
+                <span id="page-status">Loading metrics...</span>
+            </div>
+        </header>
+
+        <section>
+            <h2 class="section-heading">Evaluation Metrics</h2>
+
+            <div class="metrics-grid">
+                <article class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">Precision</span>
+                        <span class="metric-icon">◎</span>
+                    </div>
+                    <div class="metric-value" id="performance-precision">—</div>
+                    <p class="metric-note">Correct anomaly predictions</p>
+                </article>
+
+                <article class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">Recall</span>
+                        <span class="metric-icon">↗</span>
+                    </div>
+                    <div class="metric-value" id="performance-recall">—</div>
+                    <p class="metric-note">Actual anomalies detected</p>
+                </article>
+
+                <article class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">F1-Score</span>
+                        <span class="metric-icon">◈</span>
+                    </div>
+                    <div class="metric-value" id="performance-f1">—</div>
+                    <p class="metric-note">Balance of precision and recall</p>
+                </article>
+
+                <article class="metric-card">
+                    <div class="metric-top">
+                        <span class="metric-label">PR-AUC</span>
+                        <span class="metric-icon">⌁</span>
+                    </div>
+                    <div class="metric-value" id="performance-pr-auc">—</div>
+                    <p class="metric-note">Precision-recall curve area</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- CONFUSION MATRIX (2x2 Matrix Layout) -->
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Confusion Matrix Counts</h2>
+                    <p class="panel-description">
+                        Detailed breakdown of model classification performance against ground truth labels.
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 650px; margin: 0 auto;">
+                <div style="background: rgba(109, 152, 112, 0.08); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center;">
+                    <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">True Positives (TP)</span>
+                    <strong id="performance-tp" style="font-size: 28px; font-weight: 700; color: var(--sage-dark);">—</strong>
+                    <p style="font-size: 11px; color: var(--muted); margin-top: 6px;">Anomalies Found</p>
+                </div>
+
+                <div style="background: rgba(229, 138, 43, 0.08); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center;">
+                    <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">False Positives (FP)</span>
+                    <strong id="performance-fp" style="font-size: 28px; font-weight: 700; color: var(--orange);">—</strong>
+                    <p style="font-size: 11px; color: var(--muted); margin-top: 6px;">False Alarms</p>
+                </div>
+
+                <div style="background: rgba(229, 138, 43, 0.08); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center;">
+                    <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">False Negatives (FN)</span>
+                    <strong id="performance-fn" style="font-size: 28px; font-weight: 700; color: var(--orange);">—</strong>
+                    <p style="font-size: 11px; color: var(--muted); margin-top: 6px;">Anomalies Missed</p>
+                </div>
+
+                <div style="background: rgba(109, 152, 112, 0.08); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center;">
+                    <span style="font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">True Negatives (TN)</span>
+                    <strong id="performance-tn" style="font-size: 28px; font-weight: 700; color: var(--sage-dark);">—</strong>
+                    <p style="font-size: 11px; color: var(--muted); margin-top: 6px;">Correct Normal Points</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Performance Overview</h2>
+                    <p class="panel-description">
+                        Visual comparison of the available evaluation metrics.
+                    </p>
+                </div>
+            </div>
+
+            <div class="chart-wrap">
+                <canvas id="performance-chart"></canvas>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Algorithm Comparison</h2>
+                    <p class="panel-description">
+                        Summary of results returned by the backend.
+                    </p>
+                </div>
+                <span class="badge">Evaluation</span>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current Value</th>
+                            <th>Interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="algorithm-name">Precision</td>
+                            <td class="score" id="table-precision">—</td>
+                            <td>How many flagged observations were correct</td>
+                        </tr>
+                        <tr>
+                            <td class="algorithm-name">Recall</td>
+                            <td class="score" id="table-recall">—</td>
+                            <td>How many labelled anomalies were found</td>
+                        </tr>
+                        <tr>
+                            <td class="algorithm-name">F1-Score</td>
+                            <td class="score" id="table-f1">—</td>
+                            <td>Harmonic mean of precision and recall</td>
+                        </tr>
+                        <tr>
+                            <td class="algorithm-name">PR-AUC</td>
+                            <td class="score" id="table-pr-auc">—</td>
+                            <td>Area under the precision-recall curve</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="performance-message" class="message" style="margin-top: 18px;">
+                Retrieving performance data...
+            </div>
+        </section>
+
+        <footer class="footer">
+            NAB Anomaly Detection Research System
+        </footer>
+    </main>
+
+    <script>
+        let performanceChartInstance = null;
+
+        const metricIds = {
+            precision: "performance-precision",
+            recall: "performance-recall",
+            f1: "performance-f1",
+            pr_auc: "performance-pr-auc"
+        };
+
+        function findMetric(data, names) {
+            for (const name of names) {
+                if (data[name] !== undefined && data[name] !== null) {
+                    return data[name];
+                }
+            }
+            return null;
+        }
+
+        function formatMetric(value) {
+            if (value === null || value === undefined || value === "") {
+                return "—";
+            }
+            const number = Number(value);
+            return Number.isFinite(number) ? number.toFixed(3) : String(value);
+        }
+
+        function formatCount(value) {
+            if (value === null || value === undefined || value === "") {
+                return "—";
+            }
+            const number = Number(value);
+            return Number.isFinite(number) ? Math.round(number).toString() : String(value);
+        }
+
+        function setMetric(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = formatMetric(value);
+            }
+        }
+
+        function setCount(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = formatCount(value);
+            }
+        }
+
+        function updatePerformanceChart(metrics) {
+            const canvas = document.getElementById("performance-chart");
+            if (!canvas) return;
+
+            const labels = ["Precision", "Recall", "F1-Score", "PR-AUC"];
+            const values = [
+                metrics.precision,
+                metrics.recall,
+                metrics.f1,
+                metrics.pr_auc
+            ].map(value => {
+                const number = Number(value);
+                return Number.isFinite(number) ? number : null;
+            });
+
+            if (performanceChartInstance) {
+                performanceChartInstance.destroy();
+            }
+
+            performanceChartInstance = new Chart(canvas, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Metric score",
+                        data: values,
+                        backgroundColor: [
+                            "#63745B",
+                            "#8C9B80",
+                            "#AAB7A0",
+                            "#E58A2B"
+                        ],
+                        borderRadius: 7,
+                        maxBarThickness: 65
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => {
+                                    const value = context.raw;
+                                    return value === null
+                                        ? "No data available"
+                                        : "Score: " + Number(value).toFixed(4);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            grid: { color: "#EDF0E9" },
+                            ticks: { color: "#778075" }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: "#596456" }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadPerformance() {
+            const status = document.getElementById("page-status");
+            const message = document.getElementById("performance-message");
+
+            try {
+                const response = await fetch("/api/performance");
+
+                if (!response.ok) {
+                    throw new Error("The server returned HTTP " + response.status);
+                }
+
+                const result = await response.json();
+                const data = result.metrics || result.performance || result;
+
+                const metrics = {
+                    precision: findMetric(data, ["precision", "Precision"]),
+                    recall: findMetric(data, ["recall", "Recall"]),
+                    f1: findMetric(data, ["f1", "f1_score", "f1-score", "F1"]),
+                    pr_auc: findMetric(data, ["pr_auc", "pr-auc", "PR_AUC", "auc"]),
+                    tp: findMetric(data, ["tp", "true_positive", "true_positives", "TP"]),
+                    fp: findMetric(data, ["fp", "false_positive", "false_positives", "FP"]),
+                    fn: findMetric(data, ["fn", "false_negative", "false_negatives", "FN"]),
+                    tn: findMetric(data, ["tn", "true_negative", "true_negatives", "TN"])
+                };
+
+                for (const [key, elementId] of Object.entries(metricIds)) {
+                    setMetric(elementId, metrics[key]);
+                }
+
+                setCount("performance-tp", metrics.tp);
+                setCount("performance-fp", metrics.fp);
+                setCount("performance-fn", metrics.fn);
+                setCount("performance-tn", metrics.tn);
+
+                document.getElementById("table-precision").textContent = formatMetric(metrics.precision);
+                document.getElementById("table-recall").textContent = formatMetric(metrics.recall);
+                document.getElementById("table-f1").textContent = formatMetric(metrics.f1);
+                document.getElementById("table-pr-auc").textContent = formatMetric(metrics.pr_auc);
+
+                updatePerformanceChart(metrics);
+
+                const hasMetric = [
+                    metrics.precision,
+                    metrics.recall,
+                    metrics.f1,
+                    metrics.pr_auc
+                ].some(value => value !== null && value !== undefined);
+
+                if (hasMetric) {
+                    status.textContent = "Metrics loaded";
+                    message.textContent = "Performance values were loaded from the current backend response.";
+                } else {
+                    status.textContent = "No metrics available";
+                    message.textContent = "The endpoint responded, but no recognized metric fields were found.";
+                }
+
+            } catch (error) {
+                console.error("Unable to load performance metrics:", error);
+                status.textContent = "Unable to load";
+                message.textContent = "Could not load performance data. Details: " + error.message;
+
+                updatePerformanceChart({ precision: null, recall: null, f1: null, pr_auc: null });
+            }
+        }
+
+        loadPerformance();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAB Monitor | Anomaly Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="app-container">
+    {% set active_page = 'performance' %}
+    {% include 'sidebar.html' %}
+
+    <main id="overview" class="main-content">
+        <!-- INTRODUCTION -->
+        <section class="welcome-section">
+            <div class="eyebrow">
+                <span class="eyebrow-line"></span>
+                TIME-SERIES INTELLIGENCE
+            </div>
+            <h1>Keep your data<br>in <span>view.</span></h1>
+            <p>
+                Explore time-series behaviour, identify unusual patterns,
+                and evaluate anomaly detection performance across NAB datasets.
+            </p>
+        </section>
+
+        <!-- SUMMARY CARDS -->
+        <section class="stats-container" aria-label="Dataset statistics">
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Available datasets</span>
+                    <span class="stat-icon sage-icon">▦</span>
+                </div>
+                <div class="stat-value" id="dataset-count">58</div>
+                <div class="stat-footnote">NAB time-series collection</div>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">Observations processed</span>
+                    <span class="stat-icon neutral-icon">⌁</span>
+                </div>
+                <div class="stat-value" id="observation-count">0</div>
+                <div class="stat-footnote">During the current session</div>
+            </article>
+
+            <article class="stat-card anomaly-stat">
+                <div class="stat-top">
+                    <span class="stat-label">Anomalies detected</span>
+                    <span class="stat-icon orange-icon">!</span>
+                </div>
+                <div class="stat-value" id="total-anomaly-count">0</div>
+                <div class="stat-footnote">Flagged by the detector</div>
+            </article>
+        </section>
+
+        <!-- DATASET & ALGORITHM CONFIGURATION (Always Visible) -->
+        <section class="setup-card">
+            <div class="setup-copy">
+                <span class="section-kicker">01 / CONFIGURATION</span>
+                <h2>Configure dataset & algorithm</h2>
+                <p>
+                    Select your NAB dataset, choose the detection algorithm, and fine-tune experimental parameters.
+                </p>
+            </div>
+
+            <div class="setup-controls" style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label for="dataset-select" style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px;">NAB Dataset</label>
+                        <select id="dataset-select" name="dataset" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: #fff;">
+                            <option value="">Loading datasets...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="algorithm-select" style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px;">Algorithm</label>
+                        <select id="algorithm-select" name="algorithm" onchange="updateAlgorithmParams()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: #fff;">
+                            <option value="Isolation Forest">Isolation Forest (Best)</option>
+                            <option value="LOF">Local Outlier Factor (LOF)</option>
+                            <option value="One-Class SVM">One-Class SVM</option>
+                            <option value="DBSCAN">DBSCAN</option>
+                            <option value="LSTM Autoencoder">LSTM Autoencoder</option>
+                            <option value="Half-Space Trees">Half-Space Trees</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dynamic Parameters Container -->
+                <div id="dynamic-params-container" style="background: var(--page-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
+                    <h4 style="margin-bottom: 10px; font-size: 13px; color: var(--sage-dark); font-weight: 600;">Algorithm Parameters (Verified Experimental Defaults)</h4>
+                    <div id="param-fields" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <button id="start-button"
+                            class="button button-primary"
+                            onclick="startMonitoring()" style="flex: 1;">
+                        <span>▶</span> Apply & Start Monitoring
+                    </button>
+
+                    <button id="pause-button"
+                            class="button button-secondary hidden"
+                            onclick="togglePause()">
+                        ⏸ Pause Monitoring
+                    </button>
+
+                    <button id="stop-button"
+                            class="button button-stop hidden"
+                            onclick="stopMonitoring()">
+                        ■ Stop Monitoring
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- LIVE MONITOR -->
+        <section id="live-monitor" class="live-monitor hidden">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">02 / LIVE ANALYSIS</span>
+                    <h2 id="monitor-title">Monitoring in progress</h2>
+                    <p id="monitor-description">
+                        The system is continuously analysing the selected NAB dataset.
+                    </p>
+                </div>
+
+                <div class="monitoring-badge">
+                    <span class="status-dot"></span>
+                    <span>Live session</span>
+                </div>
+            </div>
+
+            <!-- SIGNAL CHART -->
+            <article class="content-card chart-card">
+                <div class="card-heading">
+                    <div>
+                        <h3>Signal monitor</h3>
+                        <p id="current-dataset">Selected dataset</p>
+                    </div>
+
+                    <div class="chart-legend">
+                        <span><i class="legend-line"></i> Signal</span>
+                        <span><i class="legend-dot"></i> Anomaly</span>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="live-chart"></canvas>
+                </div>
+
+                <div class="chart-caption">
+                    <span>Recent observations</span>
+                    <span>Signal value over time</span>
+                </div>
+            </article>
+
+            <!-- LIVE METRICS -->
+            <div class="live-metrics-grid">
+                <article class="mini-metric">
+                    <span class="mini-metric-label">Current observation</span>
+                    <strong id="current-observation">0</strong>
+                    <span class="mini-metric-note">Processed records</span>
+                </article>
+
+                <article class="mini-metric">
+                    <span class="mini-metric-label">Detected anomalies</span>
+                    <strong id="anomaly-count">0</strong>
+                    <span class="mini-metric-note">Flagged observations</span>
+                </article>
+
+                <article class="mini-metric progress-metric">
+                    <div class="progress-heading">
+                        <span class="mini-metric-label">Analysis progress</span>
+                        <strong id="progress-text">0%</strong>
+                    </div>
+
+                    <div class="progress-track">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+
+                    <span class="mini-metric-note">Dataset processing status</span>
+                </article>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="page-footer">
+            <span>NAB Monitor</span>
+            <span>Time-series anomaly detection workspace</span>
+        </footer>
+    </main>
+</div>
+
+<!-- ANOMALY SOUND -->
+<audio id="anomaly-sound" src="{{ url_for('static', filename='sounds/anomaly.mp3') }}" preload="auto"></audio>
+
+<!-- CHART.JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- MONITORING CONTROLLER -->
+<script src="{{ url_for('static', filename='js/monitoring.js') }}"></script>
+</body>
+</html>
